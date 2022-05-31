@@ -16,7 +16,14 @@ class BalanceHistoryEventHandler(private val repository: Repository<BalanceAmoun
                 val history = repository.get()
                 val map = history.map.toMutableMap()
                 val dateTime = event.datetime.withZoneSameInstant(UTC).truncatedTo(ChronoUnit.HOURS).plusHours(1)
-                map[dateTime] = (history.map[dateTime] ?: ZERO) + event.amount
+                val currentHourAmount = history.map[dateTime] ?: history.map[dateTime.minusHours(1)] ?: ZERO
+                map[dateTime] = currentHourAmount + event.amount
+
+                val nextHour = dateTime.plusHours(1)
+                val nextHourAmount = history.map[nextHour]
+                if (nextHourAmount != null) {
+                    map[nextHour] = nextHourAmount + event.amount
+                }
                 repository.save(BalanceAmountHistory(map))
             }
         }

@@ -7,18 +7,13 @@ import java.math.BigDecimal
 import java.time.ZonedDateTime
 
 class TransactionHandlerImpl(private val commandDispatcher: CommandDispatcher) : TransactionHandler {
-    private val initializationTime = ZonedDateTime.now()
-    init {
-        commandDispatcher.handle(TransactionCommand(
-            datetime = initializationTime,
-            amount = BigDecimal(1000)
-        ))
-    }
 
+    @Suppress("ReplaceCallWithBinaryOperator")
     override fun handle(transaction: Transaction): SaveTransactionResponse {
-        val isTransactionBeforeInitialization = transaction.datetime.isBefore(initializationTime)
+        val isTransactionTooOld = transaction.datetime.isBefore(ZonedDateTime.now().minusHours(1))
         val isTransactionFromFuture = transaction.datetime.isAfter(ZonedDateTime.now())
-        return if (isTransactionBeforeInitialization || isTransactionFromFuture)
+        val isInvalidAmount = transaction.amount.compareTo(BigDecimal.ZERO) <= 0
+        return if (isTransactionTooOld || isTransactionFromFuture || isInvalidAmount)
             CommandDispatchingResult.ERROR.toResponse()
         else
             commandDispatcher.handle(transaction.toCommand()).toResponse()
