@@ -24,7 +24,7 @@ fun Application.module() {
         post("/transaction") {
             call.respond(dependencies.transactionHandler.handle(call.receive()))
         }
-        post("/balance-history") {
+        post("/get-balance-history") {
             call.respond(dependencies.balanceHistoryHandler.handle(call.receive()))
         }
     }
