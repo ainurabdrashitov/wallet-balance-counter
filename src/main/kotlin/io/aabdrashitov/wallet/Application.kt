@@ -1,7 +1,6 @@
-package io.aabdrashitov
+package io.aabdrashitov.wallet
 
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import io.aabdrashitov.wallet.Dependencies
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.contentnegotiation.*
