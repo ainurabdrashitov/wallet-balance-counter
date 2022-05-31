@@ -1,6 +1,6 @@
 package io.aabdrashitov.wallet.domain.query.eventhandler
 
-import io.aabdrashitov.wallet.domain.query.BalanceAmountHistory
+import io.aabdrashitov.wallet.domain.query.BalanceAmountHistoryItem
 import io.aabdrashitov.wallet.domain.query.repository.Repository
 import io.aabdrashitov.wallet.event.Event
 import io.aabdrashitov.wallet.event.EventHandler
@@ -9,22 +9,22 @@ import java.math.BigDecimal.ZERO
 import java.time.ZoneOffset.UTC
 import java.time.temporal.ChronoUnit
 
-class BalanceHistoryEventHandler(private val repository: Repository<BalanceAmountHistory>) : EventHandler {
+class BalanceHistoryEventHandler(private val repository: Repository<BalanceAmountHistoryItem>) : EventHandler {
     override fun handle(event: Event) {
         when (event) {
             is NewTransaction -> {
-                val history = repository.get()
-                val map = history.map.toMutableMap()
-                val dateTime = event.datetime.withZoneSameInstant(UTC).truncatedTo(ChronoUnit.HOURS).plusHours(1)
-                val currentHourAmount = history.map[dateTime] ?: history.map[dateTime.minusHours(1)] ?: ZERO
-                map[dateTime] = currentHourAmount + event.amount
+                val currentHour = event.datetime.withZoneSameInstant(UTC).truncatedTo(ChronoUnit.HOURS).plusHours(1)
+                val currentHourItem = repository.findByDatetime(currentHour)
+                val prevHourItem = repository.findByDatetime(currentHour.minusHours(1))
+                val nextHourItem = repository.findByDatetime(currentHour.plusHours(1))
 
-                val nextHour = dateTime.plusHours(1)
-                val nextHourAmount = history.map[nextHour]
-                if (nextHourAmount != null) {
-                    map[nextHour] = nextHourAmount + event.amount
+                val currentHourAmount = currentHourItem?.amount ?: prevHourItem?.amount ?: ZERO
+                val newCurrentHourAmount = currentHourAmount + event.amount
+
+                repository.save(BalanceAmountHistoryItem(currentHour, newCurrentHourAmount))
+                if (nextHourItem != null) {
+                    repository.save(BalanceAmountHistoryItem(currentHour.plusHours(1), nextHourItem.amount + event.amount))
                 }
-                repository.save(BalanceAmountHistory(map))
             }
         }
     }

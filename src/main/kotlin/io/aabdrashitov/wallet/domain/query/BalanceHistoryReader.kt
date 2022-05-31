@@ -4,9 +4,10 @@ import java.math.BigDecimal
 import java.time.ZonedDateTime
 
 interface BalanceHistoryReader {
-    fun get(): BalanceAmountHistory
+    fun get(start: ZonedDateTime, end: ZonedDateTime): List<BalanceAmountHistoryItem>
 }
 
-data class BalanceAmountHistory(
-    val map: Map<ZonedDateTime, BigDecimal>
+data class BalanceAmountHistoryItem(
+    val datetime: ZonedDateTime,
+    val amount: BigDecimal
 )
